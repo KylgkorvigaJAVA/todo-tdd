@@ -9,7 +9,7 @@ let req, res, next
 beforeEach(() => {
     req = httpMocks.createRequest()
     res = httpMocks.createResponse()
-    next = null
+    next = jest.fn()
 })
 
 describe('TodoController.createTodo', () => {
@@ -28,15 +28,20 @@ describe('TodoController.createTodo', () => {
     })
 
     it('should return 201 response code', async () => {
-        req.body = newTodo
         await TodoController.createTodo(req, res, next)
         expect(res.statusCode).toBe(201)
         expect(res._isEndCalled()).toBeTruthy()
     })
 
     it('should return json body in response', async () => {
-        await TodoModel.create.mockReturnValue(newTodo)
+        TodoModel.create.mockReturnValue(newTodo)
         await TodoController.createTodo(req, res, next)
         expect(res._getJSONData()).toStrictEqual(newTodo)
+    })
+    it('should handle errors', async () => {
+        const errorMessage = { message: "Done property missing" };
+        TodoModel.create.mockRejectedValue(errorMessage)
+        await TodoController.createTodo(req, res, next)
+        expect(next).toHaveBeenCalledWith(errorMessage)
     })
 })
